@@ -177,15 +177,15 @@ body{margin:0;background:#fdf8e8;font-family:system-ui,sans-serif;overscroll-beh
         <path id="sp1" fill="none" stroke="#ecdcb8" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
         <path id="sp2" fill="none" stroke="#f8efdc" stroke-width="12" stroke-linecap="round" stroke-dasharray="12 18"/>
         <rect x="348" y="124" width="36" height="15" rx="5" fill="#e8907c"/>
-        <text x="700" y="265" font-size="80" text-anchor="middle" class="sway">🌳</text>
-        <text x="520" y="175" font-size="60" text-anchor="middle" class="sway" style="animation-delay:-1.5s">🌳</text>
-        <text x="755" y="500" font-size="66" text-anchor="middle" class="sway" style="animation-delay:-2.6s">🌲</text>
-        <text x="690" y="440" font-size="54" text-anchor="middle" class="sway" style="animation-delay:-.8s">🌳</text>
+        <text x="700" y="265" font-size="80" text-anchor="middle">🌳</text>
+        <text x="520" y="175" font-size="60" text-anchor="middle">🌳</text>
+        <text x="755" y="500" font-size="66" text-anchor="middle">🌲</text>
+        <text x="690" y="440" font-size="54" text-anchor="middle">🌳</text>
         <text x="630" y="600" font-size="36" text-anchor="middle">🪑</text>
         <text x="470" y="610" font-size="30" text-anchor="middle">🌷</text><text x="505" y="628" font-size="26" text-anchor="middle">🌼</text>
         <text x="520" y="250" font-size="28" text-anchor="middle">🌷</text><text x="680" y="330" font-size="26" text-anchor="middle">🌼</text><text x="430" y="400" font-size="26" text-anchor="middle">🌷</text>
         <text x="445" y="155" font-size="36" text-anchor="middle">📮</text>
-        <text x="120" y="1150" font-size="28" text-anchor="middle">🌷</text><text x="520" y="1150" font-size="28" text-anchor="middle">🌼</text><text x="700" y="1155" font-size="40" text-anchor="middle" class="sway">🌳</text>
+        <text x="120" y="1150" font-size="28" text-anchor="middle">🌷</text><text x="520" y="1150" font-size="28" text-anchor="middle">🌼</text><text x="700" y="1155" font-size="40" text-anchor="middle">🌳</text>
         <text font-size="28" text-anchor="middle">🦋<animateMotion dur="18s" repeatCount="indefinite" path="M520 480 C 600 240, 760 300, 700 450 S 520 600, 520 480"/></text>
         <rect id="nOut" x="-900" y="-900" width="2600" height="3000" pointer-events="none" opacity="0" style="mix-blend-mode:multiply;transition:fill 1.2s,opacity 1.2s"/>
         <g id="slg" pointer-events="none" opacity="0" style="transition:opacity 1.2s"></g>
@@ -283,7 +283,7 @@ const PETF=[{n:'Baloo',ic:'baloo',l:'baloo',sp:'Chaton noir et blanc'},{n:'Karad
 LOG.sort((a,b)=>a.ago-b.ago);
 // ---- Données : l'historique (events), les tâches et les récompenses viennent de store.js (Supabase ou essai local).
 // Points, niveaux, cagnotte et « dernière fois » sont toujours recalculés à partir de l'historique.
-const APP_VERSION='1.0.0';
+const APP_VERSION='1.0.1';
 const D0=d=>{const z=new Date(d);z.setHours(0,0,0,0);return z.getTime()},dayAgo=at=>Math.max(0,Math.round((D0(Date.now())-D0(at))/864e5));
 const newId=()=>HTStore.uuid();
 // Tâches de départ (créées dans la base à la création de la maison), échéances réparties sur leur cycle
