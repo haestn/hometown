@@ -1,6 +1,6 @@
 // HomeTown — service worker : l'app s'ouvre même sans réseau, et chaque nouvelle version est proposée à l'ouverture.
 // Pour publier une nouvelle version : changez VERSION (et APP_VERSION dans index.html), puis déposez les fichiers.
-const VERSION = '1.0.4';
+const VERSION = '1.1.0';
 const CACHE = 'hometown-' + VERSION;
 const SHELL = ['./', './index.html', './config.js', './store.js', './manifest.webmanifest',
   './icons/icon-180.png', './icons/icon-192.png', './icons/icon-512.png'];
