@@ -5,7 +5,7 @@
 (() => {
   const CFG = window.HOMETOWN_CONFIG || {};
   const CLOUD = !!(CFG.supabaseUrl && CFG.supabaseAnonKey && !/VOTRE|YOUR/i.test(CFG.supabaseUrl + CFG.supabaseAnonKey) && window.supabase);
-  const SCHEMA = 1; // version du schéma de base que cette version de l'app sait lire
+  const SCHEMA = 2; // version du schéma de base que cette version de l'app sait lire (2 = v1.2 : demandes d'aide)
   const K = { cache: 'hometown.cache.v1', outbox: 'hometown.outbox.v1', local: 'hometown.local.v1' };
   const ls = {
     get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
@@ -15,7 +15,8 @@
   const uuid = () => (crypto.randomUUID ? crypto.randomUUID() :
     'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); }));
   const COLS = {
-    events: ['id', 'household_id', 'kind', 'member', 'task_id', 'task_name', 'target', 'points', 'at', 'created_by'],
+    // v1.2 : to_member, ref et note servent aux demandes d'aide (script supabase/002_entraide.sql)
+    events: ['id', 'household_id', 'kind', 'member', 'task_id', 'task_name', 'target', 'points', 'at', 'created_by', 'to_member', 'ref', 'note'],
     tasks: ['household_id', 'id', 'target', 'name', 'freq', 'effort', 'minutes', 'base_at', 'archived', 'sort', 'updated_at'],
     rewards: ['id', 'household_id', 'emoji', 'name', 'price', 'planned_date', 'updated_at']
   };
