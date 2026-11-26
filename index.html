@@ -434,7 +434,7 @@ const PETF=[{n:'Baloo',ic:'baloo',l:'baloo',sp:'Chaton noir et blanc'},{n:'Karad
 LOG.sort((a,b)=>a.ago-b.ago);
 // ---- Données : l'historique (events), les tâches et les récompenses viennent de store.js (Supabase ou essai local).
 // Points, niveaux, cagnotte et « dernière fois » sont toujours recalculés à partir de l'historique.
-const APP_VERSION='1.3.0';
+const APP_VERSION='1.3.1';
 const D0=d=>{const z=new Date(d);z.setHours(0,0,0,0);return z.getTime()},dayAgo=at=>Math.max(0,Math.round((D0(Date.now())-D0(at))/864e5));
 const newId=()=>HTStore.uuid();
 // Tâches de départ (créées dans la base à la création de la maison), échéances réparties sur leur cycle
@@ -664,6 +664,7 @@ function notifGet(){let n=null;try{n=JSON.parse(localStorage.getItem(NK))}catch(
 function notifSave(n){try{localStorage.setItem(NK,JSON.stringify(n))}catch(e){}}
 // v1.3 : écran des notifications. Sur l'iPhone (app installée, en ligne) : vraie autorisation + abonnement enregistré dans Supabase
 // (table push_subs) ; la fonction « notify » envoie ensuite les notifications, même app fermée. Dans la maquette (window.HOMETOWN_NOTIF) : simulation.
+let NERR='';// dernier échec d'activation (affiché dans l'écran Notifications)
 const NDEMO=!!window.HOMETOWN_NOTIF,VAPID=(window.HOMETOWN_CONFIG||{}).vapidPublicKey||'';
 const u8=s=>{const p='='.repeat((4-s.length%4)%4),b=atob((s+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(b,c=>c.charCodeAt(0))};
 const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
@@ -677,6 +678,7 @@ function notifSheet(ask,again){const n=notifGet(),why=notifWhy();
  $('sheet').innerHTML=`<div class="sh" role="dialog" aria-label="Notifications" style="position:relative;${again?'animation:none':''}"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:600;font-size:18px">Notifications</span><button class="ib" id="fX" aria-label="Fermer" style="width:32px;height:32px;font-size:17px"><i class="ti ti-x" aria-hidden="true"></i></button></div>`+
   `<div class="card" style="display:flex;align-items:center;gap:10px;margin-top:12px"><span style="font-size:30px">🔔</span><div style="flex:1;min-width:0"><div style="font-weight:600">${why?'Pas disponibles ici':n.on?'Activées sur ce téléphone':'Désactivées sur ce téléphone'}</div><div style="font-size:13px;color:#a8916f">${why?esc(why):n.on?'Choisis ce que tu veux recevoir.':'Même app fermée, HomeTown te prévient.'}</div></div>${why?'':n.on?`<button class="chip" id="nOff">Couper</button>`:`<button class="pill" id="nOn">Activer</button>`}</div>`+
   NOPT.map(([k,e,t,d])=>`<div class="card" style="display:flex;align-items:center;gap:10px;${n.on&&!why?'':'opacity:.55'}"><span style="font-size:22px">${e}</span><div style="flex:1;min-width:0"><div style="font-weight:500">${t}</div><div style="font-size:12px;color:#a8916f">${d}</div></div><button class="sw${n.on&&n.p[k]?' on':''}" data-k="${k}" role="switch" aria-checked="${!!(n.on&&n.p[k])}" aria-label="${esc(t)}"${n.on&&!why?'':' disabled'}></button></div>`).join('')+
+  (NERR?`<div class="card" style="font-size:13px;color:#c0392b;background:#fdecea">⚠️ Activation impossible — ${esc(NERR)}</div>`:'')+
   `<div style="font-size:12px;color:#b8a688;margin:6px 4px 0">Seulement sur l'app installée sur l'écran d'accueil (iPhone avec iOS 16.4 ou plus récent). Pour tout couper : Réglages de l'iPhone → Notifications → HomeTown.</div>`+
   (ask?`<div id="nAsk" style="position:absolute;inset:0;background:rgba(0,0,0,.35);border-radius:26px 26px 0 0;display:flex;align-items:center;justify-content:center"><div style="width:270px;background:rgba(250,250,250,.97);border-radius:14px;text-align:center;font-family:system-ui,sans-serif;color:#111;overflow:hidden"><div style="padding:16px 16px 12px"><div style="font-weight:600;font-size:16px;line-height:1.25">« HomeTown » souhaite vous envoyer des notifications</div><div style="font-size:13px;margin-top:6px;line-height:1.3">Les notifications peuvent inclure des alertes, des sons et des pastilles d'icônes. Vous pouvez les configurer dans Réglages.</div></div><div style="display:flex;border-top:1px solid #d6d6d6"><button id="nNo" style="flex:1;padding:11px;border:none;background:none;color:#0a7aff;font-size:16px;border-right:1px solid #d6d6d6;cursor:pointer">Refuser</button><button id="nYes" style="flex:1;padding:11px;border:none;background:none;color:#0a7aff;font-size:16px;font-weight:600;cursor:pointer">Autoriser</button></div></div></div>`:'')+`</div>`;
  $('sheet').innerHTML=fx($('sheet').innerHTML);
@@ -684,9 +686,11 @@ function notifSheet(ask,again){const n=notifGet(),why=notifWhy();
  // Activer : dans la maquette, fausse fenêtre d'autorisation ; sur l'iPhone, la vraie (elle doit partir directement du toucher)
  if($('nOn'))$('nOn').onclick=()=>{if(NDEMO)return notifSheet(true,true);
   Notification.requestPermission().then(async p=>{if(p!=='granted'){toast(p==='denied'?"Refusé : Réglages de l'iPhone → Notifications → HomeTown":'Notifications non activées');return}
+   // v1.3.1 : en cas d'échec, l'écran affiche l'étape (iPhone ou Supabase) et le message exact, pour pouvoir le diagnostiquer
+   let step='iPhone';
    try{const r=await navigator.serviceWorker.ready;let s=await r.pushManager.getSubscription();if(!s)s=await r.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8(VAPID)});
-    await HTStore.pushSave(s.toJSON(),n.p);n.on=true;n.ep=s.endpoint;notifSave(n);notifSheet(false,true);toast('🔔 Notifications activées')}
-   catch(e){console.error(e);toast("⚠️ Activation impossible : réessaie avec du réseau")}})};
+    step='Supabase';await HTStore.pushSave(s.toJSON(),n.p);n.on=true;n.ep=s.endpoint;notifSave(n);NERR='';notifSheet(false,true);toast('🔔 Notifications activées')}
+   catch(e){console.error(e);NERR=`${step} : ${(e&&(e.message||e.code||e.name))||e}`;notifSheet(false,true);toast('⚠️ Activation impossible (détail dans l’écran)')}})};
  if($('nOff'))$('nOff').onclick=async()=>{if(!NDEMO){const s=await notifSub();if(s){await HTStore.pushDelete(s.endpoint).catch(()=>{});await s.unsubscribe().catch(()=>{})}}n.on=false;n.ep=null;notifSave(n);notifSheet(false,true);toast('Notifications coupées')};
  if(ask){$('nNo').onclick=()=>{notifSheet(false,true);toast('Notifications refusées')};$('nYes').onclick=()=>{n.on=true;notifSave(n);notifSheet(false,true);toast('🔔 Notifications activées')}}
  S.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{n.p[b.dataset.k]=!n.p[b.dataset.k];notifSave(n);b.classList.toggle('on',n.p[b.dataset.k]);b.setAttribute('aria-checked',n.p[b.dataset.k]);
