@@ -190,6 +190,22 @@
       const row = pick('rewards', { id: uuid(), ...r, household_id: S.household.id, updated_at: new Date().toISOString() });
       merge('rewards', row); saveCache(); if (CLOUD) queue('rewards', row); emit(); return row;
     },
+    // v1.3 : abonnement de ce téléphone aux notifications (table push_subs ; chacun ne voit que les siens)
+    async pushSave(sub, prefs) {
+      if (!CLOUD || !S.household) throw new Error('cloud_only');
+      const { error } = await sb.from('push_subs').upsert({ endpoint: sub.endpoint, household_id: S.household.id, member: S.me,
+        user_id: S.user.id, p256dh: sub.keys.p256dh, auth: sub.keys.auth, prefs, updated_at: new Date().toISOString() }, { onConflict: 'endpoint' });
+      if (error) throw error;
+    },
+    async pushPrefs(endpoint, prefs) {
+      if (!CLOUD) return;
+      const { error } = await sb.from('push_subs').update({ prefs, updated_at: new Date().toISOString() }).eq('endpoint', endpoint);
+      if (error) throw error;
+    },
+    async pushDelete(endpoint) {
+      if (!CLOUD) return;
+      await sb.from('push_subs').delete().eq('endpoint', endpoint);
+    },
     exportData() {
       const strip = o => { const { household_id, created_by, updated_by, user_id, ...r } = o; return r; };
       return { app: 'HomeTown', format: 1, schema: SCHEMA, exported_at: new Date().toISOString(),

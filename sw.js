@@ -1,6 +1,6 @@
 // HomeTown — service worker : l'app s'ouvre même sans réseau, et chaque nouvelle version est proposée à l'ouverture.
 // Pour publier une nouvelle version : changez VERSION (et APP_VERSION dans index.html), puis déposez les fichiers.
-const VERSION = '1.2.0';
+const VERSION = '1.3.0';
 const CACHE = 'hometown-' + VERSION;
 const SHELL = ['./', './index.html', './config.js', './store.js', './manifest.webmanifest',
   './icons/icon-180.png', './icons/icon-192.png', './icons/icon-512.png'];
@@ -15,6 +15,23 @@ self.addEventListener('activate', e => {
     .then(() => self.clients.claim()));
 });
 self.addEventListener('message', e => { if (e.data === 'skipWaiting') self.skipWaiting(); });
+
+// v1.3 : notifications envoyées par Supabase (fonction « notify ») ; elles s'affichent même app fermée.
+self.addEventListener('push', e => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (x) { d = { body: e.data ? e.data.text() : '' }; }
+  e.waitUntil(self.registration.showNotification(d.title || 'HomeTown', {
+    body: d.body || '', icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: d.tag, data: { url: d.url || './' } }));
+});
+// Toucher une notification : ouvre l'app (ou la remet au premier plan) sur le bon onglet
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const url = new URL((e.notification.data && e.notification.data.url) || './', self.registration.scope).href;
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
+    for (const c of cs) { if ('focus' in c) { c.postMessage({ goto: new URL(url).searchParams.get('tab') }); return c.focus(); } }
+    return self.clients.openWindow(url);
+  }));
+});
 
 self.addEventListener('fetch', e => {
   const req = e.request;
